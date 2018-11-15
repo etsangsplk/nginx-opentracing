@@ -3,6 +3,7 @@ ARG NGINX_LABEL=latest
 FROM nginx:${NGINX_LABEL}
 
 ARG OPENTRACING_CPP_VERSION=v1.5.0
+ARG NGINX_GEOIP2_VERSION=3.2
 ARG ZIPKIN_CPP_VERSION=v0.5.2
 ARG LIGHTSTEP_VERSION=v0.8.1
 ARG JAEGER_CPP_VERSION=v0.4.2
@@ -12,6 +13,8 @@ ARG DATADOG_VERSION=v0.3.0
 COPY . /src
 
 RUN set -x \
+# add this for maxmind for geoip plugin
+  sudo add-apt-repository ppa:maxmind/ppa \
 # install nginx-opentracing package dependencies
   && apt-get update \
   && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -39,6 +42,11 @@ RUN set -x \
               autogen \
               autoconf \
               libtool \
+## Install for maxmind, needed for geoip module
+  && apt-get install --no-install-recommends --no-install-suggests -y \
+              libmaxminddb0 \
+              libmaxminddb-dev \
+              mmdb-bin \
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
@@ -53,35 +61,6 @@ RUN set -x \
            -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
-### Build zipkin-cpp-opentracing
-  && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
-  && git clone -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
-  && cd zipkin-cpp-opentracing \
-  && mkdir .build && cd .build \
-  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
-  && make && make install \
-  && cd "$tempDir" \
-  && ln -s /usr/local/lib/libzipkin_opentracing.so /usr/local/lib/libzipkin_opentracing_plugin.so \
-### Build Jaeger cpp-client
-  && git clone -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
-  && cd jaeger-cpp-client \
-  && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release \
-           -DBUILD_TESTING=OFF \
-           -DJAEGERTRACING_WITH_YAML_CPP=ON .. \
-  && make && make install \
-  && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
-  && cd "$tempDir" \
-  && ln -s /usr/local/lib/libjaegertracing.so /usr/local/lib/libjaegertracing_plugin.so \
-### Build dd-opentracing-cpp
-  && git clone -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
-  && cd dd-opentracing-cpp \
-  && scripts/install_dependencies.sh not-opentracing not-curl not-zlib \
-  && mkdir .build && cd .build \
-  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
-  && make && make install \
-  && cd "$tempDir" \
-  && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
 ### Build gRPC
   && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
@@ -101,6 +80,8 @@ RUN set -x \
   && ln -s /usr/local/lib/liblightstep_tracer.so /usr/local/lib/liblightstep_tracer_plugin.so \
 ### Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
+  ### Clone geoip
+  && git clone -b $NGINX_GEOIP2_VERSION https://github.com/leev/ngx_http_geoip2_module.git /src/ngx_http_geoip2_module \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
   && apt-get update \
   && apt-get build-dep -y nginx=${NGINX_VERSION} \
@@ -111,6 +92,7 @@ RUN set -x \
   && auto/configure \
         --with-compat \
         --add-dynamic-module=/src/opentracing \
+        --add-dynamic-module=/src/ngx_http_geoip2_module \
         --with-cc-opt="-I$HUNTER_INSTALL_DIR/include" \
         --with-ld-opt="-L$HUNTER_INSTALL_DIR/lib" \
         --with-debug \
