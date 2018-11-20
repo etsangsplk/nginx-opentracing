@@ -62,9 +62,9 @@ http {
   # Load a vendor tracer
   opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/jaeger-nginx-config.json;
 
-  # or 
+  # or
   #   opentracing_load_tracer /usr/local/lib/liblightstep_tracer_plugin.so /path/to/config;
-  # or 
+  # or
   #   opentracing_load_tracer /usr/local/lib/libzipkin_opentracing_plugin.so /path/to/config;
   # or
   #   opentracing_load_tracer /usr/local/lib/libdd_opentracing_plugin.so /path/to/config;
@@ -101,7 +101,7 @@ directives.
 Docker
 ------
 A docker image `opentracing/nginx-opentracing` is provided to support using nginx with OpenTracing
-in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
+in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/).
 See [here](example/) for examples of how to use it.
 
 Additionally, custom images can be built by running
@@ -129,6 +129,7 @@ Other build arguments
 * `JAEGER_CPP_VERSION`
 * `GRPC_VERSION`
 * `NGINX_OPENTRACING_VERSION`
+* `PROTOBUF_VERSION`
 
 
 Building From Source
@@ -143,6 +144,9 @@ $ make && sudo make install
 You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
 https://github.com/lightstep/lightstep-tracer-cpp), [Datadog](https://github.com/DataDog/dd-opentracing-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
 ```
+# Protobuf (not plugin)
+unforunately the docker nginx image may need to build with the approproate version of protobuf if you to integerate with Lightstep. Lightstep cpp client uses protobuf v3.5.1 but the one available for alpine only covers 3.0 as of now.
+
 # Jaeger
 wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.2/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
 
@@ -154,6 +158,15 @@ wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.
 
 # Datadog
 wget -O - https://github.com/DataDog/dd-opentracing-cpp/releases/download/v0.3.0/linux-amd64-libdd_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libdd_opentracing_plugin.so
+
+# Instana
+Per Doc (https://docs.instana.io/ecosystem/nginx/)
+
+To enable NGINX metric monitoring, you need to enable the ngx_http_stub_status_module.
+
+To enable NGINX plus metric monitoring, you need to enable the ngx_http_api_module ( * )
+
+( * ) only available for nginx plus.
 
 ```
 

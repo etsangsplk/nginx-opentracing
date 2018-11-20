@@ -33,6 +33,7 @@ RUN set -x \
               git \
               ca-certificates \
               pkg-config \
+              unzip \
               wget \
               golang \
               libz-dev \
@@ -54,6 +55,7 @@ RUN set -x \
 ### Build protobuf
   && git clone -b $PROTOBUF_VERSION https://github.com/protocolbuffers/protobuf.git \
   && cd protobuf \
+  && ./autogen.sh \
   && ./configure \
   && make \
   && make install \
