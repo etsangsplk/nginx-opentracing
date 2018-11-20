@@ -1,4 +1,4 @@
 {
-  "access_token": "$LIGHTSTEP_ACCESS_TOKEN",
+  "access_token": "de519feb9d32ab8b443d073e0950bafd",
   "component_name": "nginx"
 }

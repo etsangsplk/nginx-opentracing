@@ -7,20 +7,18 @@ ARG NGINX_GEOIP2_VERSION=3.2
 ARG ZIPKIN_CPP_VERSION=v0.5.2
 ARG LIGHTSTEP_VERSION=v0.8.1
 ARG JAEGER_CPP_VERSION=v0.4.2
-ARG GRPC_VERSION=v1.10.x
+ARG GRPC_VERSION=v1.10.0
+ARG PROTOBUF_VERSION=v3.5.1
 ARG DATADOG_VERSION=v0.3.0
 
 COPY . /src
 
 RUN set -x \
-# add this for maxmind for geoip plugin
-  sudo add-apt-repository ppa:maxmind/ppa \
 # install nginx-opentracing package dependencies
   && apt-get update \
   && apt-get install --no-install-recommends --no-install-suggests -y \
               libcurl4-openssl-dev \
-              libprotobuf-dev \
-              protobuf-compiler \
+              curl \
 # save list of currently-installed packages so build dependencies can be cleanly removed later
 	&& savedAptMark="$(apt-mark showmanual)" \
 # new directory for storing sources and .deb files
@@ -52,6 +50,14 @@ RUN set -x \
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
 	\
+  && cd "$tempDir" \
+### Build protobuf
+  && git clone -b $PROTOBUF_VERSION https://github.com/protocolbuffers/protobuf.git \
+  && cd protobuf \
+  && ./configure \
+  && make \
+  && make install \
+  && ldconfig \
   && cd "$tempDir" \
 ### Build opentracing-cpp
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \

@@ -2,7 +2,7 @@ version: '2'
 services:
 
   nginx:
-    image: opentracing/nginx-opentracing
+    image: opentracing-contrib/nginx-opentracing:latest
     networks:
       zoonet:
         aliases:
@@ -46,7 +46,7 @@ services:
     entrypoint: ./start-backend.sh
 
 volumes:
-  image-volume: 
+  image-volume:
   tmp-volume:
 
 networks:
