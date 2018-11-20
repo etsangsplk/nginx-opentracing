@@ -168,5 +168,7 @@ To enable NGINX plus metric monitoring, you need to enable the ngx_http_api_modu
 
 ( * ) only available for nginx plus.
 
+As of now, there is no cpp instana sensor, that means I cannot even build a dyanmic nginx module for instana.
+
 ```
 
