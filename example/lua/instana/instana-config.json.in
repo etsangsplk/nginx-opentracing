@@ -1,4 +1,0 @@
-{
-  "access_token": "$INSTANA_AGENT_KEY",
-  "component_name": "nginx"
-}
