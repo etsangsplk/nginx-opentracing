@@ -6,12 +6,18 @@ set -e
 [ -z "${BUILD_DIR}" ] && export BUILD_DIR=/build
 [ -z "${MODULE_DIR}" ] && export MODULE_DIR=/modules
 
-
 if [[ "$1" == "system.testing" ]]; then
   docker build -t nginx-opentracing-test/nginx -f Dockerfile-test .
   cd test
   docker build -t nginx-opentracing-test/backend -f Dockerfile-backend .
-  python3 nginx_opentracing_test.py
+  cd environment/grpc
+  docker build -t nginx-opentracing-test/grpc-backend .
+  cd -
+  PYTHONPATH=environment/grpc python3 nginx_opentracing_test.py
+  exit 0
+elif [[ "$1" == "build" ]]; then
+  mkdir -p "${BUILD_DIR}"
+  ./ci/build_nginx_opentracing_module.sh
   exit 0
 elif [[ "$1" == "module.binaries" ]]; then
   mkdir -p "${BUILD_DIR}"

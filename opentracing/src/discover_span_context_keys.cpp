@@ -15,7 +15,7 @@ namespace {
 class HeaderKeyWriter : public opentracing::HTTPHeadersWriter {
  public:
   HeaderKeyWriter(ngx_pool_t* pool, std::vector<opentracing::string_view>& keys)
-      : pool_{pool}, keys_{keys} {}
+      : pool_{pool}, keys_(keys) {}
 
   opentracing::expected<void> Set(
       opentracing::string_view key,
@@ -47,7 +47,7 @@ class HeaderKeyWriter : public opentracing::HTTPHeadersWriter {
 // See propagate_opentracing_context, set_tracer.
 //
 // Note: Any keys that a tracer might use for propagation that aren't discovered
-// discovered here will get dropped during propagation.
+// here will get dropped during propagation.
 ngx_array_t* discover_span_context_keys(ngx_pool_t* pool, ngx_log_t* log,
                                         const char* tracing_library,
                                         const char* tracer_config_file) {
